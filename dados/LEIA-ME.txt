@@ -1,0 +1,2 @@
+Esta pasta guarda os arquivos JSON salvos pelo servidor.
+Ela vai vazia para o GitHub: o .gitignore impede que os seus dados sejam enviados.

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bloco de anotações</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #1f2328; }
+    textarea { width: 100%; min-height: 180px; font: inherit; padding: 8px; box-sizing: border-box; }
+    button { font: inherit; padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    #status { margin-top: 12px; min-height: 1.4em; }
+    .ok { color: #1a7f37; }
+    .erro { color: #cf222e; }
+    li { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Bloco de anotações</h1>
+  <p>Exemplo do mini servidor: o texto é salvo em <code>dados/anotacoes.json</code>, no seu computador.</p>
+
+  <textarea id="texto" placeholder="Escreva aqui. Não coloque dados pessoais."></textarea>
+  <p>
+    <button id="salvar">Salvar</button>
+    <button id="carregar">Carregar</button>
+  </p>
+  <p id="status"></p>
+
+  <h2>Arquivos na pasta dados</h2>
+  <ul id="lista"><li>...</li></ul>
+
+  <script>
+    const ARQUIVO = 'anotacoes.json';
+    const $ = id => document.getElementById(id);
+
+    function mostrar(mensagem, ok) {
+      $('status').textContent = mensagem;
+      $('status').className = ok ? 'ok' : 'erro';
+    }
+
+    async function atualizarLista() {
+      const resposta = await fetch('/api/listar');
+      const { arquivos } = await resposta.json();
+      $('lista').replaceChildren(...(arquivos.length ? arquivos : [{ nome: '(vazia)' }]).map(a => {
+        const li = document.createElement('li');
+        li.textContent = a.bytes === undefined ? a.nome : `${a.nome} (${a.bytes} bytes, ${a.alterado.replace('T', ' ')})`;
+        return li;
+      }));
+    }
+
+    $('salvar').onclick = async () => {
+      const corpo = { texto: $('texto').value, salvoEm: new Date().toISOString() };
+      const resposta = await fetch('/api/salvar?nome=' + ARQUIVO, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpo),
+      });
+      const r = await resposta.json();
+      if (!resposta.ok) return mostrar('Não salvou: ' + r.erro, false);
+      mostrar(r.versaoAnterior ? `Salvo. A versão anterior foi guardada como ${r.versaoAnterior}.` : 'Salvo.', true);
+      atualizarLista();
+    };
+
+    $('carregar').onclick = async () => {
+      const resposta = await fetch('/api/ler?nome=' + ARQUIVO);
+      if (resposta.status === 404) return mostrar('Ainda não há nada salvo.', false);
+      const r = await resposta.json();
+      $('texto').value = r.texto;
+      mostrar('Carregado o que foi salvo em ' + new Date(r.salvoEm).toLocaleString('pt-BR') + '.', true);
+    };
+
+    atualizarLista().catch(() => mostrar('O servidor não respondeu. Ele está aberto?', false));
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# PDFs grandes vão para a página de Releases, não para o repositório
+_release/
+
+# Nunca versionar: segredos e configurações locais
+.env
+.env.*
+*.key
+*.pem
+*token*
+*senha*
+*password*
+
+# Nunca versionar: bases e dados reais
+banco.json
+dados.json
+cadastro*.xls
+cadastro*.xlsx
+*backup*
+*BACKUP*
+*.bak
+
+# Arquivos temporários do Office e do Windows
+~$*
+*.tmp
+Thumbs.db
+desktop.ini
+
+# Dados salvos pelo servidor e registro de erros (ficam só no seu computador)
+dados/*
+!dados/LEIA-ME.txt
+*.log
